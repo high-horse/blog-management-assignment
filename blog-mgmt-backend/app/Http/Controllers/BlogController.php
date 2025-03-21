@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Blog;
+use App\Traits\HandleErrorTrait;
 use Illuminate\Http\Request;
 
 class BlogController extends Controller
 {
-    //
+    use HandleErrorTrait;
     public function __construct(){
 
 
@@ -37,10 +38,7 @@ class BlogController extends Controller
                 'blogs' => $data
             ]);
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => $th->getMessage(),
-                'status' => false
-            ]);
+            return $this->handleError($th);
         }
     }
 
@@ -66,10 +64,7 @@ class BlogController extends Controller
             ]);
 
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => $th->getMessage(),
-                'status' => false
-            ]);
+            return $this->handleError($th);
         }
     }
 
@@ -92,10 +87,7 @@ class BlogController extends Controller
                 ]
             ]);
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => $th->getMessage(),
-                'status' => false
-            ]);
+            return $this->handleError($th);
         }
     }
     public function updateBlogDetail(Request $request, $id) {
@@ -118,10 +110,7 @@ class BlogController extends Controller
             ]);
 
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => $th->getMessage(),
-                'status' => false
-            ]);
+            return $this->handleError($th);
         }
     }
     public function deleteBlog(Request $request, $id) {
@@ -133,10 +122,7 @@ class BlogController extends Controller
                 'message' => 'blog deleted successfully',
             ]);
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => $th->getMessage(),
-                'status' => false
-            ]);
+            return $this->handleError($th);
         }
     }
 }

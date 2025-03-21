@@ -1,18 +1,23 @@
 <?php
 namespace App\Http\Controllers;
+use App\Traits\HandleErrorTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use App\Models\User;
 
-class UserController extends Controller{
+class UserController extends Controller
+{
 
-    public function __construct(){
+    use HandleErrorTrait;
+    public function __construct()
+    {
 
     }
 
-    public function createUsers(Request $request) {
+    public function createUsers(Request $request)
+    {
         $request->validate([
             'email' => 'required',
             'name' => 'required',
@@ -21,27 +26,25 @@ class UserController extends Controller{
         ]);
         try {
             $user = User::create([
-                'email'=> $request->email,
-                'name'=> $request->name,
+                'email' => $request->email,
+                'name' => $request->name,
                 'password' => bcrypt($request->password),
             ])
-            ->assignRole($request->role);
+                ->assignRole($request->role);
 
             return response()->json([
-                'message'=> 'User Created Successfully',
+                'message' => 'User Created Successfully',
                 'status' => true,
             ]);
         } catch (\Throwable $th) {
-            return response()->json([
-                "error"=> $th->getMessage(),
-                'status' => false
-            ]);
+           return $this->handleError($th);
         }
     }
 
-    public function getUsers(Request $request) {
+    public function getUsers(Request $request)
+    {
         try {
-            if(!$request->user()->hasRole('admin')) {
+            if (!$request->user()->hasRole('admin')) {
                 throw new \Exception("Unauthorized ");
             }
             // Select users with their roles
@@ -49,10 +52,10 @@ class UserController extends Controller{
 
             $data = $users->map(function ($user) {
                 return [
-                    'id'    => $user->id,
-                    'name'  => $user->name,
+                    'id' => $user->id,
+                    'name' => $user->name,
                     'email' => $user->email,
-                    'role'  => $user->roles->pluck('name')->first() // Get the first role name
+                    'role' => $user->roles->pluck('name')->first() // Get the first role name
                 ];
             });
             return response()->json([
@@ -61,40 +64,36 @@ class UserController extends Controller{
             ]);
 
         } catch (\Throwable $th) {
-            return response()->json([
-                "error"=> $th->getMessage(),
-                'status' => false
-            ]);
+            return $this->handleError($th);
         }
     }
 
-    public function deleteUsers(Request $request, $id) {
+    public function deleteUsers(Request $request, $id)
+    {
         try {
-            if(auth()->user()->id == $id) {
-                throw new \Exception ('Cannot delete self');
+            if (auth()->user()->id == $id) {
+                throw new \Exception('Cannot delete self');
             }
 
             $user = User::findOrFail($id);
             $user->update([
-                'email' => Carbon::now(). '' .$user->email,
+                'email' => Carbon::now() . '' . $user->email,
             ]);
             $user->delete();
 
             return response()->json([
-                'status'=> true,
+                'status' => true,
                 'message' => 'User deleted Successfully',
             ]);
 
 
         } catch (\Throwable $th) {
-            return response()->json([
-                'error'=> $th->getMessage(),
-                'status'=> false
-            ]);
+            return $this->handleError($th);
         }
     }
 
-    public function getUserDetail($id) {
+    public function getUserDetail($id)
+    {
         try {
             // Select users with their roles
             $user = User::with('roles')->select('id', 'name', 'email')->findOrFail($id);
@@ -105,56 +104,49 @@ class UserController extends Controller{
             ]);
 
         } catch (\Throwable $th) {
-            return response()->json([
-                "error"=> $th->getMessage(),
-                'status' => false
-            ]);
+            return $this->handleError($th);
         }
     }
 
-    public function getResourceRoles(Request $request) {
+    public function getResourceRoles(Request $request)
+    {
         try {
             $roles = Role::get()->pluck('name')->toArray();
             return response()->json([
-                'status'=> true,
-                'roles'=> $roles,
+                'status' => true,
+                'roles' => $roles,
             ]);
         } catch (\Throwable $th) {
-            return response()->json([
-                "error"=> $th->getMessage(),
-                'status' => false
-            ]);
+            return $this->handleError($th);
         }
     }
 
-    public function updateUserDetail(Request $request, $id) {
+    public function updateUserDetail(Request $request, $id)
+    {
         $request->validate([
             'email' => 'required|email',
             'name' => 'required|string|max:255',
             'role' => 'required'
         ]);
-    
+
         try {
             $user = User::findOrFail($id);
             $user->update([
                 'email' => $request->email,
                 'name' => $request->name,
             ]);
-    
+
             // Sync the user's role
             $user->syncRoles($request->input('role'));
-    
+
             return response()->json([
                 'status' => true,
                 'message' => 'User updated successfully',
                 // 'user' => $user
             ]);
-    
+
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => $th->getMessage(),
-                'status' => false
-            ]);
+            return $this->handleError($th);
         }
     }
 }
